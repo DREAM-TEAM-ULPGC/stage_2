@@ -1,4 +1,4 @@
-package com.dreamteam.ingestion;
+package com.dreamteam.ingestion.core;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,20 +26,17 @@ public class IngestionService {
 
 	public IngestionResult ingest(int bookId) {
 		try {
-			// idempotencia: si ya existe carpeta del libro, devolver "available"
 			Optional<Path> existing = findExistingBook(bookId);
 			if (existing.isPresent()) {
 				return new IngestionResult("available", relativize(existing.get()));
 			}
 
-			// construir ruta YYYYMMDD/HH/bookId
 			LocalDateTime now = LocalDateTime.now();
 			String day = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 			String hour = now.format(DateTimeFormatter.ofPattern("HH"));
 			Path base = datalakeDir.resolve(day).resolve(hour).resolve(String.valueOf(bookId));
 			Files.createDirectories(base);
 
-			// descargar y guardar raw
 			String raw = BookDownloader.downloadBookPlainText(bookId);
 			Path rawFile = base.resolve("raw.txt");
 			Files.writeString(rawFile, raw, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -48,7 +45,6 @@ public class IngestionService {
 			Files.writeString(base.resolve("header.txt"), parts.header(), StandardCharsets.UTF_8);
 			Files.writeString(base.resolve("body.txt"), parts.body(), StandardCharsets.UTF_8);
 
-			// log persistente
 			log(String.format("%s;book=%d;path=%s;bytes=%d",
 					now.toString(), bookId, relativize(base), raw.length()));
 
