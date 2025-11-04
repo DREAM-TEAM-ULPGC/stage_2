@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import es.ulpgc.datamart.MetadataParser;
 import es.ulpgc.datamart.MetadataStore;
 import es.ulpgc.model.BookMetadata;
+import es.ulpgc.inverted_index.InvertedIndex;
 
 public class IndexerController {
     private final int port;
@@ -39,7 +40,8 @@ public class IndexerController {
         String bookId = ctx.pathParam("book_id");
         BookMetadata bookMetadata = MetadataParser.parseHeaderMetadata(bookId);
         MetadataStore.saveToDatamart(bookMetadata);
-        
+        InvertedIndex.loadIndex("datamart/inverted_index.json");
+        InvertedIndex.addWordsForBook(bookMetadata.getContent(), Integer.parseInt(bookId));
         ctx.json("{\"status\":\"Index updated for book " + bookId + "\"}");
     }
 

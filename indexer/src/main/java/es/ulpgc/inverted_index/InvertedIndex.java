@@ -14,17 +14,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 public class InvertedIndex {
-    private Map<String, List<Integer>> invertedIndex;
-    private final Gson gson;
 
+    private static Map<String, List<Integer>> invertedIndex = new HashMap<>();
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private static final Pattern WORD_PATTERN = Pattern.compile("\\b[a-záéíóúüñ]+\\b", Pattern.CASE_INSENSITIVE);
 
-    public InvertedIndex() {
-        this.invertedIndex = new HashMap<>();
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
-    }
-
-    public void loadIndex(String indexPath) throws IOException {
+    public static void loadIndex(String indexPath) throws IOException {
         Path path = Paths.get(indexPath);
         if (Files.exists(path)) {
             String content = Files.readString(path);
@@ -35,19 +30,18 @@ public class InvertedIndex {
         }
     }
 
-    public void addWordsForBook(String text, int bookId) {
+    public static void addWordsForBook(String text, int bookId) {
         Set<String> words = extractWords(text);
 
         for (String word : words) {
             invertedIndex.computeIfAbsent(word, k -> new ArrayList<>());
-
             if (!invertedIndex.get(word).contains(bookId)) {
                 invertedIndex.get(word).add(bookId);
             }
         }
     }
 
-    public void cleanAndSort() {
+    public static void cleanAndSort() {
         for (Map.Entry<String, List<Integer>> entry : invertedIndex.entrySet()) {
             List<Integer> sortedUnique = entry.getValue().stream()
                     .distinct()
@@ -57,7 +51,7 @@ public class InvertedIndex {
         }
     }
 
-    public void saveIndex(String indexPath) throws IOException {
+    public static void saveIndex(String indexPath) throws IOException {
         Path path = Paths.get(indexPath);
 
         if (path.getParent() != null) {
@@ -67,15 +61,16 @@ public class InvertedIndex {
         String json = gson.toJson(invertedIndex);
         Files.writeString(path, json);
     }
-
-    public Map<String, List<Integer>> getIndex() {
+    
+    public static Map<String, List<Integer>> getIndex() {
         return invertedIndex;
     }
 
-    private Set<String> extractWords(String text) {
+    private static Set<String> extractWords(String text) {
         return WORD_PATTERN.matcher(text.toLowerCase())
                 .results()
                 .map(match -> match.group())
                 .collect(Collectors.toSet());
     }
+
 }
