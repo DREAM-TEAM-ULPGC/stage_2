@@ -1,20 +1,24 @@
 package com.dreamteam.search;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Loads an inverted index from JSON (term -> list of book IDs).
- * Provides simple AND/OR search with IDF-based scoring.
- * If TF is not available, TF is implicitly 1 per term-doc presence.
- */
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+
 public class SearchEngine {
 
     private Map<String, List<Integer>> index;
@@ -51,8 +55,8 @@ public class SearchEngine {
             for (String t : terms) candidateDocs.addAll(index.getOrDefault(t, List.of()));
         } else {
             candidateDocs = null;
-            for (String t : terms) {
-                List<Integer> postings = index.getOrDefault(t, List.of());
+            for (String term : terms) {
+                List<Integer> postings = index.getOrDefault(term, List.of());
                 if (candidateDocs == null) candidateDocs = new HashSet<>(postings);
                 else candidateDocs.retainAll(postings);
                 if (candidateDocs.isEmpty()) break;
@@ -63,18 +67,18 @@ public class SearchEngine {
         List<ScoredDoc> scored = new ArrayList<>();
         for (int docId : candidateDocs) {
             double s = 0.0;
-            for (String t : terms) {
-                List<Integer> postings = index.get(t);
+            for (String term : terms) {
+                List<Integer> postings = index.get(term);
                 if (postings != null && postings.contains(docId)) {
-                    s += idf.getOrDefault(t, 0.0);
+                    s += idf.getOrDefault(term, 0.0);
                 }
             }
             scored.add(new ScoredDoc(docId, s));
         }
 
         return scored.stream()
-                .sorted(Comparator.comparingDouble((ScoredDoc d) -> d.score).reversed()
-                        .thenComparingInt(d -> d.bookId))
+                .sorted(Comparator.comparingDouble((ScoredDoc doc) -> doc.score).reversed()
+                        .thenComparingInt(doc -> doc.bookId))
                 .collect(Collectors.toList());
     }
 
@@ -83,16 +87,16 @@ public class SearchEngine {
                 .filter(s -> !s.isBlank()).toList();
     }
 
-    private static Map<String, List<Integer>> loadIndex(Path p) {
+    private static Map<String, List<Integer>> loadIndex(Path path) {
         try {
-            String json = Files.readString(p);
+            String json = Files.readString(path);
             Type type = new TypeToken<Map<String, List<Integer>>>(){}.getType();
             Map<String, List<Integer>> map = new Gson().fromJson(json, type);
-            map.replaceAll((k, v) -> v.stream().distinct().collect(Collectors.toList())); // dedup
+            map.replaceAll((k, v) -> v.stream().distinct().collect(Collectors.toList()));
 
             return map;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load inverted index at " + p, e);
+        } catch (IOException exception) {
+            throw new RuntimeException("Failed to load inverted index at " + path, exception);
         }
     }
 
@@ -103,12 +107,12 @@ public class SearchEngine {
     }
 
     private static Map<String, Double> computeIdf(Map<String, List<Integer>> idx, int N) {
-        Map<String, Double> m = new HashMap<>();
+        Map<String, Double> map = new HashMap<>();
         for (var e : idx.entrySet()) {
             int df = new HashSet<>(e.getValue()).size();
-            double idf = Math.log((N + 1.0) / (df + 1.0)) + 1.0; // smoothed IDF
-            m.put(e.getKey(), idf);
+            double idf = Math.log((N + 1.0) / (df + 1.0)) + 1.0;
+            map.put(e.getKey(), idf);
         }
-        return m;
+        return map;
     }
 }

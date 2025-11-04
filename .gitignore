@@ -1,0 +1,12 @@
+# Ignore build artifacts
+/build/
+target/
+*.class
+
+# Ignore IDE files
+.vscode/
+.idea/
+.github/
+
+datalake/
+*.db

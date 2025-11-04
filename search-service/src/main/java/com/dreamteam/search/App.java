@@ -1,9 +1,10 @@
 package com.dreamteam.search;
 
-import com.dreamteam.search.util.Config;
-import io.javalin.Javalin;
-//import com.google.gson.Gson;
 import java.nio.file.Path;
+
+import com.dreamteam.search.util.Config;
+
+import io.javalin.Javalin;
 
 public class App {
     public static void main(String[] args) {
@@ -15,11 +16,9 @@ public class App {
         MetadataDao metadataDao = new MetadataDao("jdbc:sqlite:" + dbPath);
 
         Javalin app = Javalin.create(conf -> conf.http.defaultContentType = "application/json").start(port);
-        // Gson gson = new Gson();
 
         app.get("/health", ctx -> ctx.json(new Health("ok", "search", "1.0.0")));
 
-        // === NUEVO ENDPOINT: /status ===
         final long startTime = System.currentTimeMillis();
 
         app.get("/status", ctx -> {
@@ -41,7 +40,7 @@ public class App {
                 var book = metadataDao.getBookById(id);
                 if (book == null) ctx.status(404).result("{\"error\":\"book not found\"}");
                 else ctx.json(book);
-            } catch (Exception e) {
+            } catch (NumberFormatException exception) {
                 ctx.status(400).result("{\"error\":\"invalid id\"}");
             }
         });
@@ -75,8 +74,8 @@ public class App {
                 engine.reload(Path.of(indexPath));
                 metadataDao.reload("jdbc:sqlite:" + dbPath);
                 ctx.json(new Msg("reloaded"));
-            } catch (Exception e) {
-                ctx.status(500).json(new Msg("reload failed: " + e.getMessage()));
+            } catch (Exception exception) {
+                ctx.status(500).json(new Msg("reload failed: " + exception.getMessage()));
             }
         });
 
