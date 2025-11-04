@@ -1,4 +1,4 @@
-package es.ulpgc;
+package es.ulpgc.utils;
 
 import java.net.URI;
 import java.net.http.HttpClient;

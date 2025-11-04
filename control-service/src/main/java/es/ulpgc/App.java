@@ -1,5 +1,6 @@
 package es.ulpgc;
 
+import es.ulpgc.control.ControlController;
 import io.javalin.Javalin;
 
 public class App {

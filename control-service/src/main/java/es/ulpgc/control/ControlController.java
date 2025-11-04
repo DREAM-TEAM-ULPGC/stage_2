@@ -1,9 +1,12 @@
-package es.ulpgc;
+package es.ulpgc.control;
 
 import java.util.List;
 import java.util.Map;
 
 import es.ulpgc.model.ControlRecord;
+import es.ulpgc.utils.LogManager;
+import es.ulpgc.utils.Orchestrator;
+import es.ulpgc.utils.ServiceClient;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 

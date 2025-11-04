@@ -1,4 +1,4 @@
-package es.ulpgc;
+package es.ulpgc.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
