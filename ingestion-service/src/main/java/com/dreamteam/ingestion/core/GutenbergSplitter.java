@@ -1,4 +1,4 @@
-package com.dreamteam.ingestion;
+package com.dreamteam.ingestion.core;
 
 public class GutenbergSplitter {
 

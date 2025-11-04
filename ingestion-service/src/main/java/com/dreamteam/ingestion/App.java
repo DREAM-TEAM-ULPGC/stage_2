@@ -1,5 +1,8 @@
 package com.dreamteam.ingestion;
 
+import com.dreamteam.ingestion.config.Config;
+import com.dreamteam.ingestion.control.IngestionController;
+import com.dreamteam.ingestion.core.IngestionService;
 import io.javalin.Javalin;
 import com.google.gson.Gson;
 import java.util.Map;
@@ -22,7 +25,6 @@ public class App {
 			ctx.result(gson.toJson(Map.of("service", "ingestion-service", "status", "running")));
 		});
 
-		// API requerida por el PDF
 		app.post("/ingest/{book_id}", controller::ingestBook);
 		app.get("/ingest/status/{book_id}", controller::status);
 		app.get("/ingest/list", controller::list);
