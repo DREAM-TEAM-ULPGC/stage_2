@@ -140,6 +140,70 @@ public class MetadataCatalogBuilder {
         }
     }
 
+    /**
+     * Updates the metadata catalog for a specific book ID.
+     */
+    public void updateBookCatalog(int bookId) throws IOException {
+        Path datalake = Paths.get(datalakePath);
+        Path output = Paths.get(outputPath);
+
+        // Load existing catalog
+        Map<String, Map<String, String>> catalog = loadCatalog(output);
+
+        // Find the book in the datalake
+        Path bookPath = findBookPath(datalake, bookId);
+        if (bookPath == null) {
+            throw new IOException("Book ID " + bookId + " not found in datalake");
+        }
+
+        Path headerFile = bookPath.resolve("header.txt");
+        if (!Files.exists(headerFile)) {
+            throw new IOException("header.txt not found for book ID " + bookId);
+        }
+
+        // Parse header metadata
+        String headerText = Files.readString(headerFile);
+        Map<String, String> metadata = MetadataParser.parseHeaderMetadata(headerText);
+
+        // Update or remove from catalog
+        if (MetadataParser.hasAnyMetadata(metadata)) {
+            catalog.put(String.valueOf(bookId), metadata);
+            System.out.printf("Updated metadata for book ID %d: title=%s, author=%s%n",
+                    bookId, metadata.get("title"), metadata.get("author"));
+        } else {
+            catalog.remove(String.valueOf(bookId));
+            System.out.printf("Removed metadata for book ID %d (no valid metadata found)%n", bookId);
+        }
+
+        saveCatalog(output, catalog);
+    }
+
+    /**
+     * Finds the path to a specific book in the datalake.
+     */
+    private Path findBookPath(Path datalake, int bookId) throws IOException {
+        String bookIdStr = String.valueOf(bookId);
+        
+        List<Path> dayFolders = Files.list(datalake)
+                .filter(Files::isDirectory)
+                .collect(Collectors.toList());
+
+        for (Path dayFolder : dayFolders) {
+            List<Path> hourFolders = Files.list(dayFolder)
+                    .filter(Files::isDirectory)
+                    .collect(Collectors.toList());
+
+            for (Path hourFolder : hourFolders) {
+                Path bookFolder = hourFolder.resolve(bookIdStr);
+                if (Files.exists(bookFolder) && Files.isDirectory(bookFolder)) {
+                    return bookFolder;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private Map<String, Map<String, String>> loadCatalog(Path output) throws IOException {
         if (Files.exists(output)) {
             String json = Files.readString(output);

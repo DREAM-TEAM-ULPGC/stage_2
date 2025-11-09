@@ -41,13 +41,16 @@ public class IndexerService {
         try {
             DatamartInitializer.initDatamart(dbPath);
 
+            // Update index for specific book only
             InvertedIndexer indexer = new InvertedIndexer(datalakePath, indexOutputPath, indexProgressPath);
-            indexer.buildIndex();
+            indexer.updateBookIndex(bookId);
 
+            // Update catalog for specific book only
             MetadataCatalogBuilder catalogBuilder = new MetadataCatalogBuilder(
                     datalakePath, catalogOutputPath, catalogProgressPath);
-            catalogBuilder.buildCatalog();
+            catalogBuilder.updateBookCatalog(bookId);
 
+            // Update datamart for this book
             MetadataStore store = new MetadataStore(dbPath);
             store.run(catalogOutputPath);
 

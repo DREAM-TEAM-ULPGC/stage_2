@@ -154,6 +154,83 @@ public class InvertedIndexer {
                 progress.getLastDay(), progress.getLastHour());
     }
 
+    /**
+     * Updates the inverted index for a specific book ID.
+     */
+    public void updateBookIndex(int bookId) throws IOException {
+        Path datalake = Paths.get(datalakePath);
+        Path output = Paths.get(outputPath);
+
+        // Load existing index
+        Map<String, List<Integer>> invertedIndex = loadIndex(output);
+
+        // Find the book in the datalake
+        Path bookPath = findBookPath(datalake, bookId);
+        if (bookPath == null) {
+            throw new IOException("Book ID " + bookId + " not found in datalake");
+        }
+
+        Path bodyFile = bookPath.resolve("body.txt");
+        if (!Files.exists(bodyFile)) {
+            throw new IOException("body.txt not found for book ID " + bookId);
+        }
+
+        // Remove old entries for this book
+        for (List<Integer> bookIds : invertedIndex.values()) {
+            bookIds.remove(Integer.valueOf(bookId));
+        }
+
+        // Read and tokenize body text
+        String text = Files.readString(bodyFile).toLowerCase();
+        Matcher matcher = WORD_PATTERN.matcher(text);
+        Set<String> words = new HashSet<>();
+        while (matcher.find()) {
+            words.add(matcher.group());
+        }
+
+        // Update inverted index with new words
+        for (String word : words) {
+            invertedIndex.computeIfAbsent(word, k -> new ArrayList<>());
+            if (!invertedIndex.get(word).contains(bookId)) {
+                invertedIndex.get(word).add(bookId);
+            }
+        }
+
+        // Sort and save
+        for (List<Integer> ids : invertedIndex.values()) {
+            Collections.sort(ids);
+        }
+
+        saveIndex(output, invertedIndex);
+        System.out.printf("Updated index for book ID %d%n", bookId);
+    }
+
+    /**
+     * Finds the path to a specific book in the datalake.
+     */
+    private Path findBookPath(Path datalake, int bookId) throws IOException {
+        String bookIdStr = String.valueOf(bookId);
+        
+        List<Path> dayFolders = Files.list(datalake)
+                .filter(Files::isDirectory)
+                .collect(Collectors.toList());
+
+        for (Path dayFolder : dayFolders) {
+            List<Path> hourFolders = Files.list(dayFolder)
+                    .filter(Files::isDirectory)
+                    .collect(Collectors.toList());
+
+            for (Path hourFolder : hourFolders) {
+                Path bookFolder = hourFolder.resolve(bookIdStr);
+                if (Files.exists(bookFolder) && Files.isDirectory(bookFolder)) {
+                    return bookFolder;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private Map<String, List<Integer>> loadIndex(Path output) throws IOException {
         if (Files.exists(output)) {
             String json = Files.readString(output);
