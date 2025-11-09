@@ -11,3 +11,8 @@ target/
 datalake/
 *.db
 control_log.txt
+
+inverted_index.json
+progress.json
+catalog.json
+progress_parser.json

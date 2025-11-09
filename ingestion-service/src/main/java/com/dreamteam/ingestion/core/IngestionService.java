@@ -50,7 +50,6 @@ public class IngestionService {
 
 			return new IngestionResult("downloaded", relativize(base));
 		} catch (Exception e) {
-			e.printStackTrace();
 			return new IngestionResult("error", e.getMessage());
 		}
 	}
