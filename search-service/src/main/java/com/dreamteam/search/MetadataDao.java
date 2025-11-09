@@ -1,5 +1,7 @@
 package com.dreamteam.search;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -16,6 +18,7 @@ import com.dreamteam.search.models.Book;
 public class MetadataDao implements AutoCloseable {
     private Connection connection;
     private String jdbcUrl;
+    private boolean isConnected;
 
     public MetadataDao(String jdbcUrl) {
         this.jdbcUrl = jdbcUrl;
@@ -23,8 +26,23 @@ public class MetadataDao implements AutoCloseable {
     }
 
     private void connect() {
-        try { this.connection = DriverManager.getConnection(jdbcUrl); }
-        catch (SQLException exception) { throw new RuntimeException("Cannot connect to SQLite: " + jdbcUrl, exception); }
+        try {
+            // Check if database file exists (extract path from jdbc:sqlite:path)
+            String dbPath = jdbcUrl.replace("jdbc:sqlite:", "");
+            if (!Files.exists(Path.of(dbPath))) {
+                System.out.println("Warning: Database file not found at " + dbPath + ". Metadata queries will return empty results.");
+                this.isConnected = false;
+                return;
+            }
+
+            this.connection = DriverManager.getConnection(jdbcUrl);
+            this.isConnected = true;
+            System.out.println("Successfully connected to database at " + dbPath);
+        } catch (SQLException exception) {
+            System.err.println("Warning: Cannot connect to SQLite at " + jdbcUrl + ": " + exception.getMessage());
+            System.err.println("Metadata queries will return empty results.");
+            this.isConnected = false;
+        }
     }
 
     public void reload(String jdbcUrl) {
@@ -34,6 +52,8 @@ public class MetadataDao implements AutoCloseable {
     }
 
     public Book getBookById(int id) {
+        if (!isConnected) return null;
+        
         String sql = "SELECT book_id, title, author, language FROM books WHERE book_id = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, id);
@@ -46,13 +66,17 @@ public class MetadataDao implements AutoCloseable {
                         rs.getString("language")
                 );
             }
-        } catch (SQLException exception) { throw new RuntimeException(exception); }
+        } catch (SQLException exception) {
+            System.err.println("Error querying book by id: " + exception.getMessage());
+            return null;
+        }
     }
 
     public List<SearchEngine.ScoredDoc> enrichAndFilter(List<SearchEngine.ScoredDoc> docs,
                                                         String authorFilter,
                                                         String languageFilter) {
-        if (docs.isEmpty()) return docs;
+        if (docs.isEmpty() || !isConnected) return docs;
+        
         String inClause = docs.stream().map(d -> "?").collect(Collectors.joining(","));
         String sql = "SELECT book_id, title, author, language FROM books WHERE book_id IN (" + inClause + ")";
         Map<Integer, Book> byId = new HashMap<>();
@@ -69,7 +93,10 @@ public class MetadataDao implements AutoCloseable {
                     ));
                 }
             }
-        } catch (SQLException exception) { throw new RuntimeException(exception); }
+        } catch (SQLException exception) {
+            System.err.println("Error enriching and filtering: " + exception.getMessage());
+            return docs;
+        }
 
         return docs.stream()
                 .filter(doc -> {
@@ -91,6 +118,6 @@ public class MetadataDao implements AutoCloseable {
     }
 
     @Override public void close() {
-        try { if (connection != null) connection.close(); } catch (SQLException ignored) {}
+        try { if (connection != null && isConnected) connection.close(); } catch (SQLException ignored) {}
     }
 }

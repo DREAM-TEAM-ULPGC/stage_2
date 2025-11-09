@@ -89,14 +89,28 @@ public class SearchEngine {
 
     private static Map<String, List<Integer>> loadIndex(Path path) {
         try {
+            if (!Files.exists(path)) {
+                System.out.println("Warning: Index file not found at " + path + ". Starting with empty index.");
+                return new HashMap<>();
+            }
+
             String json = Files.readString(path);
             Type type = new TypeToken<Map<String, List<Integer>>>(){}.getType();
             Map<String, List<Integer>> map = new Gson().fromJson(json, type);
+            
+            if (map == null) {
+                System.out.println("Warning: Index file is empty or invalid at " + path + ". Starting with empty index.");
+                return new HashMap<>();
+            }
+            
             map.replaceAll((k, v) -> v.stream().distinct().collect(Collectors.toList()));
 
+            System.out.println("Successfully loaded index from " + path + " with " + map.size() + " terms.");
             return map;
         } catch (IOException exception) {
-            throw new RuntimeException("Failed to load inverted index at " + path, exception);
+            System.err.println("Warning: Failed to load inverted index at " + path + ": " + exception.getMessage());
+            System.err.println("Starting with empty index.");
+            return new HashMap<>();
         }
     }
 

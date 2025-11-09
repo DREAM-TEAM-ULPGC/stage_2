@@ -34,7 +34,7 @@ public class Orchestrator {
 
             record.setStage("search-refresh");
             logManager.log("Indexing done. Notifying search service to refresh cache.");
-            client.post("http://localhost:7003/search/refresh");
+            client.post("http://localhost:7003/admin/reload");
 
             record.setStage("completed");
             record.setEndTime(LocalDateTime.now());
