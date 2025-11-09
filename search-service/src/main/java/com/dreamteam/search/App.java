@@ -8,9 +8,9 @@ import io.javalin.Javalin;
 
 public class App {
     public static void main(String[] args) {
-        String indexPath = Config.getEnvOrDefault("INDEX_PATH", "index/inverted_index.json");
+        String indexPath = Config.getEnvOrDefault("INDEX_PATH", "indexer/inverted_index.json");
         String dbPath = Config.getEnvOrDefault("DB_PATH", "datamart/datamart.db");
-        int port = Integer.parseInt(Config.getEnvOrDefault("PORT", "8082"));
+        int port = Integer.parseInt(Config.getEnvOrDefault("PORT", "7003"));
 
         SearchEngine engine = new SearchEngine(Path.of(indexPath));
         MetadataDao metadataDao = new MetadataDao("jdbc:sqlite:" + dbPath);
