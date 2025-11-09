@@ -1,8 +1,10 @@
-package com.dreamteam.ingestion;
+package com.dreamteam.ingestion.control;
 
 import java.util.List;
 import java.util.Map;
 
+import com.dreamteam.ingestion.core.IngestionService;
+import com.dreamteam.ingestion.utils.JsonUtil;
 import com.google.gson.Gson;
 
 import io.javalin.http.Context;

@@ -1,4 +1,4 @@
-package com.dreamteam.ingestion;
+package com.dreamteam.ingestion.config;
 
 import java.io.IOException;
 import java.io.InputStream;
