@@ -3,6 +3,7 @@ package com.dreamteam.ingestion.core;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -27,9 +28,8 @@ public class BookDownloader {
 		}
 		throw new Exception("Unable to download book " + bookId + " from Project Gutenberg", last);
 	}
-
 	private static String httpGet(String urlStr, int timeoutMs) throws Exception {
-		URL url = new URL(urlStr);
+		URL url = URI.create(urlStr).toURL();
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(timeoutMs);
 		connection.setReadTimeout(timeoutMs);

@@ -9,7 +9,6 @@ import io.javalin.json.JavalinJackson;
 
 public class App {
     public static void main(String[] args) {
-        // Configurar ObjectMapper con soporte para Java 8 date/time
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         
