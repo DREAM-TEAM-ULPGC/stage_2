@@ -27,7 +27,6 @@ public class MetadataDao implements AutoCloseable {
 
     private void connect() {
         try {
-            // Check if database file exists (extract path from jdbc:sqlite:path)
             String dbPath = jdbcUrl.replace("jdbc:sqlite:", "");
             if (!Files.exists(Path.of(dbPath))) {
                 System.out.println("Warning: Database file not found at " + dbPath + ". Metadata queries will return empty results.");
@@ -57,13 +56,13 @@ public class MetadataDao implements AutoCloseable {
         String sql = "SELECT book_id, title, author, language FROM books WHERE book_id = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, id);
-            try (ResultSet rs = preparedStatement.executeQuery()) {
-                if (!rs.next()) return null;
+            try (ResultSet results = preparedStatement.executeQuery()) {
+                if (!results.next()) return null;
                 return new Book(
-                        rs.getInt("book_id"),
-                        rs.getString("title"),
-                        rs.getString("author"),
-                        rs.getString("language")
+                        results.getInt("book_id"),
+                        results.getString("title"),
+                        results.getString("author"),
+                        results.getString("language")
                 );
             }
         } catch (SQLException exception) {
@@ -83,13 +82,13 @@ public class MetadataDao implements AutoCloseable {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             int i = 1;
             for (var doc : docs) preparedStatement.setInt(i++, doc.bookId);
-            try (ResultSet rs = preparedStatement.executeQuery()) {
-                while (rs.next()) {
-                    byId.put(rs.getInt("book_id"), new Book(
-                            rs.getInt("book_id"),
-                            rs.getString("title"),
-                            rs.getString("author"),
-                            rs.getString("language")
+            try (ResultSet results = preparedStatement.executeQuery()) {
+                while (results.next()) {
+                    byId.put(results.getInt("book_id"), new Book(
+                            results.getInt("book_id"),
+                            results.getString("title"),
+                            results.getString("author"),
+                            results.getString("language")
                     ));
                 }
             }
