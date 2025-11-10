@@ -1,4 +1,4 @@
-package es.ulpgc.datamart;
+package com.dreamteam.datamart;
 
 import java.io.IOException;
 import java.nio.file.Files;

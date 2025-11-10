@@ -1,4 +1,4 @@
-package es.ulpgc.datamart;
+package com.dreamteam.datamart;
 
 import java.util.HashMap;
 import java.util.Map;

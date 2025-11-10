@@ -1,4 +1,4 @@
-package es.ulpgc.service;
+package com.dreamteam.service;
 
 
 import java.io.IOException;
@@ -7,13 +7,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import com.dreamteam.core.InvertedIndexer;
+import com.dreamteam.core.MetadataCatalogBuilder;
+import com.dreamteam.datamart.DatamartInitializer;
+import com.dreamteam.datamart.MetadataStore;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
-import es.ulpgc.core.InvertedIndexer;
-import es.ulpgc.core.MetadataCatalogBuilder;
-import es.ulpgc.datamart.DatamartInitializer;
-import es.ulpgc.datamart.MetadataStore;
 
 
 public class IndexerService {

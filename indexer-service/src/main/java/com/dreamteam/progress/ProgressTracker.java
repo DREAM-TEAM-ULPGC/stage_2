@@ -1,4 +1,4 @@
-package es.ulpgc.progress;
+package com.dreamteam.progress;
 
 import java.io.IOException;
 import java.nio.file.Files;

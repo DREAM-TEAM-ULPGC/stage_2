@@ -1,10 +1,10 @@
-package es.ulpgc;
+package com.dreamteam;
 
 import java.util.Map;
 
+import com.dreamteam.service.IndexerService;
 import com.google.gson.Gson;
 
-import es.ulpgc.service.IndexerService;
 import io.javalin.Javalin;
 
 

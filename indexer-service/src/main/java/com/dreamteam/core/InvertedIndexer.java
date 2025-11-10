@@ -1,4 +1,4 @@
-package es.ulpgc.core;
+package com.dreamteam.core;
 
 
 import java.io.IOException;
@@ -17,11 +17,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.dreamteam.progress.ProgressTracker;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-
-import es.ulpgc.progress.ProgressTracker;
 
 /**
  * Builds an inverted index from book body files in the datalake.

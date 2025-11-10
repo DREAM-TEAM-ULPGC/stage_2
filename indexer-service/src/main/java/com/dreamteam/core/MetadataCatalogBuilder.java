@@ -1,4 +1,4 @@
-package es.ulpgc.core;
+package com.dreamteam.core;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,12 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.dreamteam.datamart.MetadataParser;
+import com.dreamteam.progress.ProgressTracker;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-
-import es.ulpgc.datamart.MetadataParser;
-import es.ulpgc.progress.ProgressTracker;
 
 /**
  * Builds a metadata catalog from book header files.
