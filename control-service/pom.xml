@@ -40,7 +40,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.dreamteam.control.App</mainClass>
+              <mainClass>com.dreamteam.App</mainClass>
             </manifest>
           </archive>
         </configuration>

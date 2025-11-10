@@ -47,7 +47,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.dreamteam.indexer.App</mainClass>
+                            <mainClass>com.dreamteam.App</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
