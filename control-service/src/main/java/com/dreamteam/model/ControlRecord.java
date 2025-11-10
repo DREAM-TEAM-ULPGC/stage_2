@@ -23,7 +23,6 @@ public class ControlRecord {
         this.error = error;
     }
 
-    // Getters y setters
     public int getBookId() { return bookId; }
     public String getStage() { return stage; }
     public String getStatus() { return status; }

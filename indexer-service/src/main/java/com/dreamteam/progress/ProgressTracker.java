@@ -34,8 +34,8 @@ public class ProgressTracker {
             try {
                 String json = Files.readString(path);
                 return gson.fromJson(json, ProgressTracker.class);
-            } catch (IOException e) {
-                System.err.println("Failed to load progress: " + e.getMessage());
+            } catch (IOException exception) {
+                System.err.println("Failed to load progress: " + exception.getMessage());
             }
         }
         return new ProgressTracker();
@@ -47,8 +47,8 @@ public class ProgressTracker {
             Files.createDirectories(path.getParent());
             String json = gson.toJson(this);
             Files.writeString(path, json);
-        } catch (IOException e) {
-            System.err.println("Failed to save progress: " + e.getMessage());
+        } catch (IOException exception) {
+            System.err.println("Failed to save progress: " + exception.getMessage());
         }
     }
 

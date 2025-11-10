@@ -2,6 +2,7 @@ package com.dreamteam;
 
 import java.util.Map;
 
+import com.dreamteam.config.ConfigLoader;
 import com.dreamteam.service.IndexerService;
 import com.google.gson.Gson;
 
@@ -12,13 +13,13 @@ public class App {
     private static final Gson gson = new Gson();
 
     public static void main(String[] args) {
-        String datalakePath = System.getenv().getOrDefault("DATALAKE_PATH", "datalake");
-        String indexOutputPath = System.getenv().getOrDefault("INDEX_OUTPUT_PATH", "indexer/inverted_index.json");
-        String catalogOutputPath = System.getenv().getOrDefault("CATALOG_OUTPUT_PATH", "metadata/catalog.json");
-        String dbPath = System.getenv().getOrDefault("DB_PATH", "datamart/datamart.db");
-        String indexProgressPath = System.getenv().getOrDefault("INDEX_PROGRESS_PATH", "indexer/progress.json");
-        String catalogProgressPath = System.getenv().getOrDefault("CATALOG_PROGRESS_PATH", "metadata/progress_parser.json");
-        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "7002"));
+        String datalakePath = ConfigLoader.getProperty("datalake.path", "datalake");
+        String indexOutputPath = ConfigLoader.getProperty("index.output.path", "indexer/inverted_index.json");
+        String catalogOutputPath = ConfigLoader.getProperty("catalog.output.path", "metadata/catalog.json");
+        String dbPath = ConfigLoader.getProperty("db.path", "datamart/datamart.db");
+        String indexProgressPath = ConfigLoader.getProperty("index.progress.path", "indexer/progress.json");
+        String catalogProgressPath = ConfigLoader.getProperty("catalog.progress.path", "metadata/progress_parser.json");
+        int port = ConfigLoader.getIntProperty("server.port", 7002);
 
         IndexerService service = new IndexerService(
                 datalakePath, indexOutputPath, catalogOutputPath,

@@ -18,8 +18,8 @@ public class DatamartInitializer {
 
         String url = "jdbc:sqlite:" + dbPath;
 
-        try (Connection conn = DriverManager.getConnection(url);
-             Statement stmt = conn.createStatement()) {
+        try (Connection connection = DriverManager.getConnection(url);
+             Statement statement = connection.createStatement()) {
 
             String sql = """
                 CREATE TABLE IF NOT EXISTS books (
@@ -31,7 +31,7 @@ public class DatamartInitializer {
                 )
                 """;
 
-            stmt.execute(sql);
+            statement.execute(sql);
             System.out.println("Datamart initialized at: " + dbFile.toAbsolutePath());
 
         } catch (SQLException exception) {

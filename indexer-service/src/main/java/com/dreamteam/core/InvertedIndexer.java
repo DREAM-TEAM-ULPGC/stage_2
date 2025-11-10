@@ -22,10 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-/**
- * Builds an inverted index from book body files in the datalake.
- * Equivalent to indexer.py build_inverted_index function.
- */
+
 public class InvertedIndexer {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private static final Pattern WORD_PATTERN = Pattern.compile("\\b[a-záéíóúüñ]+\\b");
@@ -40,9 +37,7 @@ public class InvertedIndexer {
         this.progressPath = progressPath;
     }
 
-    /**
-     * Builds or updates the inverted index incrementally.
-     */
+
     public void buildIndex() throws IOException {
         Path datalake = Paths.get(datalakePath);
         Path output = Paths.get(outputPath);
@@ -50,10 +45,8 @@ public class InvertedIndexer {
         ProgressTracker progress = ProgressTracker.load(progressPath);
         System.out.println("Last progress: " + progress);
 
-        // Load existing index if present
         Map<String, List<Integer>> invertedIndex = loadIndex(output);
 
-        // Process datalake directories
         List<Path> dayFolders = Files.list(datalake)
                 .filter(Files::isDirectory)
                 .sorted()
@@ -62,7 +55,6 @@ public class InvertedIndexer {
         for (Path dayFolder : dayFolders) {
             String dayName = dayFolder.getFileName().toString();
 
-            // Skip already processed days
             if (progress.getLastDay() != null && dayName.compareTo(progress.getLastDay()) < 0) {
                 continue;
             }
@@ -78,7 +70,6 @@ public class InvertedIndexer {
             for (Path hourFolder : hourFolders) {
                 String hourName = hourFolder.getFileName().toString();
 
-                // Skip already processed hours
                 if (dayName.equals(progress.getLastDay()) && progress.getLastHour() != null) {
                     if (hourName.matches("\\d+") && progress.getLastHour().matches("\\d+")) {
                         if (Integer.parseInt(hourName) < Integer.parseInt(progress.getLastHour())) {
@@ -89,7 +80,6 @@ public class InvertedIndexer {
 
                 System.out.printf("Processing day/hour %s/%s ...%n", dayName, hourName);
 
-                // Get all book ID folders in this hour
                 List<Path> bookFolders = Files.list(hourFolder)
                         .filter(Files::isDirectory)
                         .filter(p -> p.getFileName().toString().matches("\\d+"))
@@ -99,7 +89,6 @@ public class InvertedIndexer {
                 for (Path bookFolder : bookFolders) {
                     int bookId = Integer.parseInt(bookFolder.getFileName().toString());
 
-                    // Skip already indexed books
                     if (dayName.equals(progress.getLastDay()) &&
                         hourName.equals(progress.getLastHour()) &&
                         bookId <= progress.getLastIndexedId()) {
@@ -111,7 +100,6 @@ public class InvertedIndexer {
                         continue;
                     }
 
-                    // Read and tokenize body text
                     String text = Files.readString(bodyFile).toLowerCase();
                     Matcher matcher = WORD_PATTERN.matcher(text);
                     Set<String> words = new HashSet<>();
@@ -123,7 +111,6 @@ public class InvertedIndexer {
                         continue;
                     }
 
-                    // Update inverted index
                     for (String word : words) {
                         invertedIndex.computeIfAbsent(word, k -> new ArrayList<>());
                         if (!invertedIndex.get(word).contains(bookId)) {
@@ -135,7 +122,6 @@ public class InvertedIndexer {
                     System.out.printf("Indexed book ID %d (%s/%s)%n", bookId, dayName, hourName);
                 }
 
-                // Sort and save after each hour
                 for (List<Integer> ids : invertedIndex.values()) {
                     Collections.sort(ids);
                 }
@@ -153,17 +139,12 @@ public class InvertedIndexer {
                 progress.getLastDay(), progress.getLastHour());
     }
 
-    /**
-     * Updates the inverted index for a specific book ID.
-     */
     public void updateBookIndex(int bookId) throws IOException {
         Path datalake = Paths.get(datalakePath);
         Path output = Paths.get(outputPath);
 
-        // Load existing index
         Map<String, List<Integer>> invertedIndex = loadIndex(output);
 
-        // Find the book in the datalake
         Path bookPath = findBookPath(datalake, bookId);
         if (bookPath == null) {
             throw new IOException("Book ID " + bookId + " not found in datalake");
@@ -174,12 +155,10 @@ public class InvertedIndexer {
             throw new IOException("body.txt not found for book ID " + bookId);
         }
 
-        // Remove old entries for this book
         for (List<Integer> bookIds : invertedIndex.values()) {
             bookIds.remove(Integer.valueOf(bookId));
         }
 
-        // Read and tokenize body text
         String text = Files.readString(bodyFile).toLowerCase();
         Matcher matcher = WORD_PATTERN.matcher(text);
         Set<String> words = new HashSet<>();
@@ -187,7 +166,6 @@ public class InvertedIndexer {
             words.add(matcher.group());
         }
 
-        // Update inverted index with new words
         for (String word : words) {
             invertedIndex.computeIfAbsent(word, k -> new ArrayList<>());
             if (!invertedIndex.get(word).contains(bookId)) {
@@ -195,7 +173,6 @@ public class InvertedIndexer {
             }
         }
 
-        // Sort and save
         for (List<Integer> ids : invertedIndex.values()) {
             Collections.sort(ids);
         }
@@ -204,9 +181,6 @@ public class InvertedIndexer {
         System.out.printf("Updated index for book ID %d%n", bookId);
     }
 
-    /**
-     * Finds the path to a specific book in the datalake.
-     */
     private Path findBookPath(Path datalake, int bookId) throws IOException {
         String bookIdStr = String.valueOf(bookId);
         

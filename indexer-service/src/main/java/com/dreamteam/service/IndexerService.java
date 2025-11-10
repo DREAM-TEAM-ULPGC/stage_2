@@ -40,16 +40,13 @@ public class IndexerService {
         try {
             DatamartInitializer.initDatamart(dbPath);
 
-            // Update index for specific book only
             InvertedIndexer indexer = new InvertedIndexer(datalakePath, indexOutputPath, indexProgressPath);
             indexer.updateBookIndex(bookId);
 
-            // Update catalog for specific book only
             MetadataCatalogBuilder catalogBuilder = new MetadataCatalogBuilder(
                     datalakePath, catalogOutputPath, catalogProgressPath);
             catalogBuilder.updateBookCatalog(bookId);
 
-            // Update datamart for this book
             MetadataStore store = new MetadataStore(dbPath);
             store.run(catalogOutputPath);
 
@@ -57,11 +54,11 @@ public class IndexerService {
                     "book_id", bookId,
                     "index", "updated"
             );
-        } catch (Exception e) {
+        } catch (Exception exception) {
             return Map.of(
                     "book_id", bookId,
                     "index", "failed",
-                    "error", e.getMessage()
+                    "error", exception.getMessage()
             );
         }
     }
@@ -92,10 +89,10 @@ public class IndexerService {
                     "books_processed", booksProcessed,
                     "elapsed_time", String.format("%.1fs", elapsedSeconds)
             );
-        } catch (Exception e) {
+        } catch (Exception exception) {
             return Map.of(
                     "books_processed", booksProcessed,
-                    "error", e.getMessage()
+                    "error", exception.getMessage()
             );
         }
     }
@@ -113,9 +110,9 @@ public class IndexerService {
                             Files.getLastModifiedTime(indexPath).toString() : "never",
                     "index_size_MB", String.format("%.2f", indexSize / (1024.0 * 1024.0))
             );
-        } catch (IOException e) {
+        } catch (IOException exception) {
             return Map.of(
-                    "error", e.getMessage()
+                    "error", exception.getMessage()
             );
         }
     }
@@ -130,7 +127,7 @@ public class IndexerService {
             String json = Files.readString(catalogPath);
             Map<?, ?> catalog = gson.fromJson(json, Map.class);
             return catalog != null ? catalog.size() : 0;
-        } catch (JsonSyntaxException | IOException e) {
+        } catch (JsonSyntaxException | IOException exception) {
             return 0;
         }
     }

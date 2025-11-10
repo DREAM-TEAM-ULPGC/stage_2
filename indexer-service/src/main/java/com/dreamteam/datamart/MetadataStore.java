@@ -52,7 +52,7 @@ public class MetadataStore {
         String url = "jdbc:sqlite:" + dbPath;
         int affected = 0;
 
-        try (Connection conn = DriverManager.getConnection(url)) {
+        try (Connection connection = DriverManager.getConnection(url)) {
             String createTable = """
                 CREATE TABLE IF NOT EXISTS books (
                     book_id INTEGER PRIMARY KEY,
@@ -63,8 +63,8 @@ public class MetadataStore {
                 )
                 """;
             
-            try (var stmt = conn.createStatement()) {
-                stmt.execute(createTable);
+            try (var statement = connection.createStatement()) {
+                statement.execute(createTable);
             }
 
             String sql = """
@@ -77,26 +77,25 @@ public class MetadataStore {
                     language = excluded.language
                 """;
 
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 for (Map.Entry<String, Map<String, String>> entry : catalog.entrySet()) {
                     try {
                         int bookId = Integer.parseInt(entry.getKey());
                         Map<String, String> meta = entry.getValue();
 
-                        pstmt.setInt(1, bookId);
-                        pstmt.setString(2, meta.get("title"));
-                        pstmt.setString(3, meta.get("author"));
-                        pstmt.setString(4, meta.get("release_date"));
-                        pstmt.setString(5, meta.get("language"));
-
-                        pstmt.addBatch();
+                        preparedStatement.setInt(1, bookId);
+                        preparedStatement.setString(2, meta.get("title"));
+                        preparedStatement.setString(3, meta.get("author"));
+                        preparedStatement.setString(4, meta.get("release_date"));
+                        preparedStatement.setString(5, meta.get("language"));
+                        preparedStatement.addBatch();
                         affected++;
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException exception) {
                         System.err.println("Skipping invalid book_id: " + entry.getKey());
                     }
                 }
 
-                pstmt.executeBatch();
+                preparedStatement.executeBatch();
             }
         }
 

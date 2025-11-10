@@ -16,10 +16,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-/**
- * Builds a metadata catalog from book header files.
- * Equivalent to metadata_parser.py build_metadata_catalog function.
- */
+
 public class MetadataCatalogBuilder {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -33,9 +30,6 @@ public class MetadataCatalogBuilder {
         this.progressPath = progressPath;
     }
 
-    /**
-     * Builds or updates the metadata catalog incrementally.
-     */
     public void buildCatalog() throws IOException {
         Path datalake = Paths.get(datalakePath);
         Path output = Paths.get(outputPath);
@@ -43,11 +37,9 @@ public class MetadataCatalogBuilder {
         ProgressTracker progress = ProgressTracker.load(progressPath);
         System.out.println("Last progress: " + progress);
 
-        // Load existing catalog if present
         Map<String, Map<String, String>> catalog = loadCatalog(output);
         boolean processedAny = false;
 
-        // Process datalake directories
         List<Path> dayFolders = Files.list(datalake)
                 .filter(Files::isDirectory)
                 .sorted()
@@ -56,7 +48,6 @@ public class MetadataCatalogBuilder {
         for (Path dayFolder : dayFolders) {
             String dayName = dayFolder.getFileName().toString();
 
-            // Skip already processed days
             if (progress.getLastDay() != null && dayName.compareTo(progress.getLastDay()) < 0) {
                 continue;
             }
@@ -72,7 +63,6 @@ public class MetadataCatalogBuilder {
             for (Path hourFolder : hourFolders) {
                 String hourName = hourFolder.getFileName().toString();
 
-                // Skip already processed hours
                 if (dayName.equals(progress.getLastDay()) && progress.getLastHour() != null) {
                     if (hourName.matches("\\d+") && progress.getLastHour().matches("\\d+")) {
                         if (Integer.parseInt(hourName) < Integer.parseInt(progress.getLastHour())) {
@@ -83,7 +73,6 @@ public class MetadataCatalogBuilder {
 
                 System.out.printf("Processing day/hour %s/%s ...%n", dayName, hourName);
 
-                // Get all book ID folders in this hour
                 List<Path> bookFolders = Files.list(hourFolder)
                         .filter(Files::isDirectory)
                         .filter(p -> p.getFileName().toString().matches("\\d+"))
@@ -93,7 +82,6 @@ public class MetadataCatalogBuilder {
                 for (Path bookFolder : bookFolders) {
                     int bookId = Integer.parseInt(bookFolder.getFileName().toString());
 
-                    // Skip already processed books
                     if (dayName.equals(progress.getLastDay()) &&
                         hourName.equals(progress.getLastHour()) &&
                         bookId <= progress.getLastIndexedId()) {
@@ -105,11 +93,9 @@ public class MetadataCatalogBuilder {
                         continue;
                     }
 
-                    // Parse header metadata
                     String headerText = Files.readString(headerFile);
                     Map<String, String> metadata = MetadataParser.parseHeaderMetadata(headerText);
 
-                    // Only store if at least one field was found
                     if (MetadataParser.hasAnyMetadata(metadata)) {
                         catalog.put(String.valueOf(bookId), metadata);
                         processedAny = true;
@@ -121,7 +107,6 @@ public class MetadataCatalogBuilder {
                     progress.setLastIndexedId(Math.max(progress.getLastIndexedId(), bookId));
                 }
 
-                // Persist after finishing the hour
                 saveCatalog(output, catalog);
                 progress.setLastDay(dayName);
                 progress.setLastHour(hourName);
@@ -139,17 +124,12 @@ public class MetadataCatalogBuilder {
         }
     }
 
-    /**
-     * Updates the metadata catalog for a specific book ID.
-     */
     public void updateBookCatalog(int bookId) throws IOException {
         Path datalake = Paths.get(datalakePath);
         Path output = Paths.get(outputPath);
 
-        // Load existing catalog
         Map<String, Map<String, String>> catalog = loadCatalog(output);
 
-        // Find the book in the datalake
         Path bookPath = findBookPath(datalake, bookId);
         if (bookPath == null) {
             throw new IOException("Book ID " + bookId + " not found in datalake");
@@ -160,11 +140,9 @@ public class MetadataCatalogBuilder {
             throw new IOException("header.txt not found for book ID " + bookId);
         }
 
-        // Parse header metadata
         String headerText = Files.readString(headerFile);
         Map<String, String> metadata = MetadataParser.parseHeaderMetadata(headerText);
 
-        // Update or remove from catalog
         if (MetadataParser.hasAnyMetadata(metadata)) {
             catalog.put(String.valueOf(bookId), metadata);
             System.out.printf("Updated metadata for book ID %d: title=%s, author=%s%n",
@@ -177,9 +155,6 @@ public class MetadataCatalogBuilder {
         saveCatalog(output, catalog);
     }
 
-    /**
-     * Finds the path to a specific book in the datalake.
-     */
     private Path findBookPath(Path datalake, int bookId) throws IOException {
         String bookIdStr = String.valueOf(bookId);
         
