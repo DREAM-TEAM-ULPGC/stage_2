@@ -22,7 +22,7 @@ public class IngestionController {
 		int bookId;
 		try {
 			bookId = Integer.parseInt(ctx.pathParam("book_id"));
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException exception) {
 			ctx.status(400);
 			ctx.json(Map.of("error", "Invalid book_id format. Must be an integer."));
 			return;
@@ -44,7 +44,7 @@ public class IngestionController {
 		int bookId;
 		try {
 			bookId = Integer.parseInt(ctx.pathParam("book_id"));
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException exception) {
 			ctx.status(400); 
 			ctx.json(Map.of("error", "Invalid book_id format. Must be an integer."));
 			return;

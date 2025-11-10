@@ -23,20 +23,20 @@ public class BookDownloader {
 			try {
 				String s = httpGet(url, 20_000);
 				if (s != null && s.length() > 0) return s;
-			} catch (Exception e) { last = e; }
+			} catch (Exception exception) { last = exception; }
 		}
 		throw new Exception("Unable to download book " + bookId + " from Project Gutenberg", last);
 	}
 
 	private static String httpGet(String urlStr, int timeoutMs) throws Exception {
 		URL url = new URL(urlStr);
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		conn.setConnectTimeout(timeoutMs);
-		conn.setReadTimeout(timeoutMs);
-		conn.setRequestProperty("User-Agent", "DreamTeam-Ingestion/1.0");
-		int code = conn.getResponseCode();
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setConnectTimeout(timeoutMs);
+		connection.setReadTimeout(timeoutMs);
+		connection.setRequestProperty("User-Agent", "DreamTeam-Ingestion/1.0");
+		int code = connection.getResponseCode();
 		if (code != 200) throw new RuntimeException("HTTP " + code + " for " + urlStr);
-		try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+		try (BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
 			 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			byte[] buf = new byte[8192];
 			int n;

@@ -49,8 +49,8 @@ public class IngestionService {
 					now.toString(), bookId, relativize(base), raw.length()));
 
 			return new IngestionResult("downloaded", relativize(base));
-		} catch (Exception e) {
-			return new IngestionResult("error", e.getMessage());
+		} catch (Exception exception) {
+			return new IngestionResult("error", exception.getMessage());
 		}
 	}
 
@@ -70,7 +70,7 @@ public class IngestionService {
 				.distinct()
 				.sorted()
 				.toList();
-		} catch (IOException e) {
+		} catch (IOException exception) {
 			return List.of();
 		}
 	}
@@ -94,16 +94,16 @@ public class IngestionService {
 				return Optional.of(datalakeDir.resolve(relativePath));
 			}
 
-		} catch (IOException e) {
+		} catch (IOException exception) {
 		}
 		return Optional.empty(); 
 	}
 
-	private String relativize(Path p) {
+	private String relativize(Path path) {
 		try {
-			return datalakeDir.toAbsolutePath().relativize(p.toAbsolutePath()).toString().replace("\\","/");
+			return datalakeDir.toAbsolutePath().relativize(path.toAbsolutePath()).toString().replace("\\","/");
 		} catch (Exception ignored) {
-			return p.toString().replace("\\","/");
+			return path.toString().replace("\\","/");
 		}
 	}
 
