@@ -16,3 +16,5 @@ inverted_index.json
 progress.json
 catalog.json
 progress_parser.json
+
+dependency-reduced-pom.xml
