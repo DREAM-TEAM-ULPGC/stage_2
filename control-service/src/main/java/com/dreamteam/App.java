@@ -1,6 +1,6 @@
-package es.ulpgc;
+package com.dreamteam;
 
-import es.ulpgc.control.ControlController;
+import com.dreamteam.control.ControlController;
 import io.javalin.Javalin;
 
 public class App {

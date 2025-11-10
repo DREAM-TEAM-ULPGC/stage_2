@@ -1,12 +1,12 @@
-package es.ulpgc.control;
+package com.dreamteam.control;
 
 import java.util.List;
 import java.util.Map;
 
-import es.ulpgc.model.ControlRecord;
-import es.ulpgc.utils.LogManager;
-import es.ulpgc.utils.Orchestrator;
-import es.ulpgc.utils.ServiceClient;
+import com.dreamteam.model.ControlRecord;
+import com.dreamteam.utils.LogManager;
+import com.dreamteam.utils.Orchestrator;
+import com.dreamteam.utils.ServiceClient;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 

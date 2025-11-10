@@ -1,4 +1,4 @@
-package es.ulpgc.model;
+package com.dreamteam.model;
 
 public class IngestionStatus {
     private final int bookId;

@@ -1,4 +1,4 @@
-package es.ulpgc.utils;
+package com.dreamteam.utils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import es.ulpgc.model.ControlRecord;
+import com.dreamteam.model.ControlRecord;
 
 public class Orchestrator {
     private final ServiceClient client = new ServiceClient();

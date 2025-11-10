@@ -1,4 +1,4 @@
-package es.ulpgc.utils;
+package com.dreamteam.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

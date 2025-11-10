@@ -1,4 +1,4 @@
-package es.ulpgc.utils;
+package com.dreamteam.utils;
 
 import java.net.URI;
 import java.net.http.HttpClient;

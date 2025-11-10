@@ -1,4 +1,4 @@
-package es.ulpgc.model;
+package com.dreamteam.model;
 
 public class IndexStatus {
     private final int booksIndexed;
