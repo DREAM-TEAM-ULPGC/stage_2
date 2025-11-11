@@ -1,7 +1,7 @@
 # Stage 2 – Professionalization of the Java Project
 
 ## Introduction
-This project corresponds to Stage 2 of the DREAM-TEAM-ULPGC initiative. Its goal is to professionalize the development of a distributed Java-based system, following clean architecture and microservices design principles. The repository includes multiple independent services (control, ingestion, indexer, and search), each responsible for a specific domain, providing modularity, scalability, and maintainability. This stage focuses on production-quality code, integration between services, proper testing, and full documentation of the system.
+This project corresponds to Stage 2 of the DREAM-TEAM-ULPGC initiative. Its goal is to professionalize the development of a distributed Java-based system, following clean architecture and microservices design principles. The repository includes multiple independent services — control, ingestion, indexer, and search — each responsible for a specific domain, providing modularity, scalability, and maintainability. This stage focuses on production-quality code, integration between services, proper testing, and full documentation of the system.
 
 ## Repository Structure
 The repository includes the following modules:
@@ -16,16 +16,14 @@ The repository includes the following modules:
 Each service is a standalone Spring Boot microservice and can be executed, built, and deployed independently.
 
 ## Technologies and Tools
-- Programming Language: Java 21
-- Framework: Spring Boot 3.x
+- Programming Language: Java
+- Framework: Spring Boot
 - Build System: Maven
 - API Design: RESTful APIs using Spring Web
-- Data Storage: Internal repositories and index structures (specific backend configurable)
-- Testing: JUnit 5, Mockito, and integration tests with Spring Test
-- Logging: SLF4J and Logback
-- Code Quality: Checkstyle, PMD, and SonarLint
+- Testing: JUnit 5
+- Logging: SLF4J
 - Version Control: Git and GitHub
-- Continuous Integration: GitHub Actions for automated build, test, and code analysis
+- Continuous Integration: GitHub Actions
 
 ## Architecture Overview
 The system follows a microservices architecture based on four main services:
@@ -76,7 +74,7 @@ Each service can be executed individually on a separate port as defined in its a
 ## Development Guidelines
 - Follow code style rules defined in checkstyle.xml.
 - Document all public classes and key methods using Javadoc.
-- Maintain 80% minimum test coverage on new code.
+- Maintain test coverage on new code.
 - Run mvn verify before any commit to ensure quality gates are passed.
 - Branch naming convention:
   - feature/<short-description> for new features
@@ -95,11 +93,7 @@ Each service can be executed individually on a separate port as defined in its a
 6. User performs GET /search?query=value on Search Service to retrieve data.
 7. Control Service logs workflow completion and runtime metrics.
 
-## License
-This project is licensed under the MIT License. Please refer to the LICENSE file for details.
-
 ## Team Information
 - Team: DREAM-TEAM-ULPGC
 - University: Universidad de Las Palmas de Gran Canaria
 - Stage: Stage 2 – Professionalization of Java Code and Distributed Microservices System
-
