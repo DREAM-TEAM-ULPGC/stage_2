@@ -25,7 +25,6 @@ All four folders you listed correspond to working services in the same project, 
 - Build tool: Maven (root pom.xml and per-service poms)
 - API style: REST (HTTP endpoints in control-service via Javalin, and REST endpoints in the other services)
 - Version control: Git / GitHub
-No license file was mentioned, so this README does not declare any license.
 
 ## Architecture Overview
 The architecture is service-oriented: each folder is an independent Java service.
