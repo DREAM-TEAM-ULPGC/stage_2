@@ -8,8 +8,8 @@ public class GutenbergSplitter {
         String startMarker = "*** START OF";
         String endMarker = "*** END OF";
 
-        int start = indexOfLineContaining(text, startMarker);
-        int end = indexOfLineContaining(text, endMarker);
+        int start = indexOfLineContainingOptimized(text, startMarker);
+        int end = indexOfLineContainingOptimized(text, endMarker, start >= 0 ? start : 0);
 
         String header = "";
         String body = text;
@@ -28,25 +28,33 @@ public class GutenbergSplitter {
         return new Parts(header.strip(), body.strip());
     }
 
-    private static int indexOfLineContaining(String text, String marker) {
-        int idx = -1, from = 0;
-        while (true) {
+    private static int indexOfLineContainingOptimized(String text, String marker) {
+        return indexOfLineContainingOptimized(text, marker, 0);
+    }
+    
+    private static int indexOfLineContainingOptimized(String text, String marker, int startIndex) {
+        final int textLength = text.length();
+        final int markerLength = marker.length();
+        int from = startIndex;
+        
+        while (from < textLength) {
             int nl = text.indexOf('\n', from);
             if (nl < 0) {
-                if (from < text.length() && text.substring(from).toUpperCase().contains(marker)) {
-                    idx = from;
+                nl = textLength; 
+            }
+            
+            int lineStart = from;
+            int lineEnd = nl;
+            
+            for (int i = lineStart; i <= lineEnd - markerLength; i++) {
+                if (text.regionMatches(true, i, marker, 0, markerLength)) {
+                    return lineStart; 
                 }
-                break;
             }
-
-            String line = text.substring(from, nl);
-            if (line.toUpperCase().contains(marker)) {
-                idx = from;
-                break;
-            }
-
+            
             from = nl + 1;
+            if (from >= textLength) break;
         }
-        return idx;
+        return -1;
     }
 }
