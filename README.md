@@ -1,97 +1,114 @@
 # Stage 2 – Professionalization of the Java Project
 
 ## Introduction
-This project corresponds to Stage 2 of the DREAM-TEAM-ULPGC initiative. Its goal is to professionalize the development of a distributed Java-based system, following clean architecture and microservices design principles. The repository includes multiple independent services — control, ingestion, indexer, and search — each responsible for a specific domain, providing modularity, scalability, and maintainability. This stage focuses on production-quality code, integration between services, proper testing, and full documentation of the system.
+This project corresponds to Stage 2 of the DREAM-TEAM-ULPGC initiative. Its goal is to professionalize the development of a distributed Java-based system using a set of small services (control-service, ingestion-service, indexer-service and search-service). Each service is responsible for a single part of the data pipeline. The control-service, in particular, is implemented with Javalin as the HTTP server, so the orchestration layer is lightweight and focused on exposing REST endpoints.
 
 ## Repository Structure
-The repository includes the following modules:
-- /control-service – Central orchestrator service that coordinates operations among all other services. It manages workflow execution, system scheduling, and overall service communication.
-- /ingestion-service – Responsible for retrieving, validating, and processing raw data from external sources. It standardizes input data and makes it available for indexing.
-- /indexer-service – Processes the ingested data, building search-friendly index structures that can later be queried efficiently by the search service.
-- /search-service – Provides endpoints for querying indexed data, supporting filters, pagination, and ranking. It acts as the public interface for data retrieval.
-- /docs – Contains technical documentation, including architecture diagrams, API definitions, and service workflows.
-- pom.xml – Main build configuration file for Maven that handles dependency management across all modules.
-- README.md – This documentation file describing the system, installation, and development standards.
+- /control-service  
+  Service that exposes HTTP endpoints using Javalin. Its role is to coordinate or trigger actions on the rest of the services. Here is where the orchestration logic lives: start ingestion, start indexing, check status. It is a Java application with Javalin as the web framework.
+- /ingestion-service  
+  Service dedicated to obtaining data from the configured source(s), validating it and preparing it to be indexed. It exposes its own REST endpoints (Java) so that the control-service or other tools can tell it to start ingestion.
+- /indexer-service  
+  Service that receives or reads the data already ingested and transforms it into a structure suitable for search. It also exposes REST endpoints to be invoked after ingestion is completed.
+- /search-service  
+  Service that exposes search endpoints (HTTP/REST) so that a client can query the data that was indexed by the indexer-service.
+- pom.xml  
+  Maven configuration at the root of the repository to build the modules.
+- README.md  
+  This document.
 
-Each service is a standalone Spring Boot microservice and can be executed, built, and deployed independently.
+All four folders you listed correspond to working services in the same project, so the idea is that they can be built separately but belong to the same overall system.
 
-## Technologies and Tools
-- Programming Language: Java
-- Framework: Spring Boot
-- Build System: Maven
-- API Design: RESTful APIs using Spring Web
-- Testing: JUnit 5
-- Logging: SLF4J
-- Version Control: Git and GitHub
-- Continuous Integration: GitHub Actions
+## Technologies and Tools (only what is visible from your description)
+- Language: Java
+- HTTP framework in control-service: Javalin
+- Build tool: Maven (root pom.xml and per-service poms)
+- API style: REST (HTTP endpoints in control-service via Javalin, and REST endpoints in the other services)
+- Version control: Git / GitHub
+No license file was mentioned, so this README does not declare any license.
 
 ## Architecture Overview
-The system follows a microservices architecture based on four main services:
-- The Control Service coordinates the execution of ingestion, indexing, and search operations.
-- The Ingestion Service collects and validates data from external APIs or sources, ensuring standard formats.
-- The Indexer Service transforms this ingested data into a structured and optimized index for fast search queries.
-- The Search Service exposes endpoints that allow users or other applications to search and retrieve information from the indexed data.
-Each service is independently deployable, communicates via REST endpoints, and follows the same internal architectural layering:
-- controller – Handles REST endpoints and request/response mapping.
-- application – Contains business logic and service orchestration.
-- domain – Includes domain entities, models, and value objects.
-- infrastructure – Implements persistence, data access, and external API integration.
-- config – Defines configuration classes, beans, and properties.
+The architecture is service-oriented: each folder is an independent Java service.
 
-### Communication Flow
-1. Control Service triggers the ingestion process via REST call to Ingestion Service.
-2. Ingestion Service retrieves data from external APIs, validates and stores it.
-3. Control Service triggers the Indexer Service to process and build searchable indices.
-4. Search Service receives requests from clients and returns relevant results using the built index.
-All services report status and logs back to the Control Service for monitoring and orchestration.
+1. control-service (Javalin)
+   - Starts a Javalin server.
+   - Defines routes/endpoints (for example, POST endpoints) that act as orchestration commands.
+   - From here you can call ingestion-service and indexer-service in the right order.
+   - It is the entry point for operators or for other systems that want to trigger the pipeline.
 
-## Installation and Execution Guide
+2. ingestion-service
+   - Responsible for fetching or receiving the source data.
+   - Validates and normalizes the data.
+   - Stores or exposes the data so that indexer-service can consume it.
+   - Can be called by control-service once an ingestion job is needed.
+
+3. indexer-service
+   - Reads data that has already been ingested.
+   - Builds an index or an internal searchable structure.
+   - Exposes an endpoint to be triggered (for example, after ingestion finishes).
+   - Acts as the bridge between “available data” and “searchable data”.
+
+4. search-service
+   - Exposes HTTP endpoints to let a client search the indexed data.
+   - Uses the index generated by indexer-service.
+   - Returns results, usually filtered or paginated.
+
+The typical flow is: control-service (Javalin) -> ingestion-service -> indexer-service -> search-service.
+
+## Communication Flow
+1. A client or operator calls an HTTP endpoint on control-service (Javalin).
+2. control-service’s Javalin handler executes logic that calls ingestion-service (usually via HTTP) to start ingestion.
+3. ingestion-service completes ingestion and leaves the data ready.
+4. control-service (or ingestion-service, depending on how you chained it) calls indexer-service to build the index.
+5. Once indexing is done, search-service can answer queries from clients.
+6. All services can log what they are doing so that control-service (or the developer) can follow the process.
+
+## Installation and Execution
 1. Clone the repository:
    git clone https://github.com/DREAM-TEAM-ULPGC/stage_2.git
-2. Move into the project directory:
+2. Move to the project root:
    cd stage_2
-3. Build the entire project:
+3. Build the whole project with Maven:
    mvn clean install
-4. To build a specific service:
-   cd ingestion-service && mvn clean install
-   cd indexer-service && mvn clean install
-5. Run any service:
-   mvn spring-boot:run
-6. Run all tests:
+4. Run control-service (Javalin):
+   cd control-service
+   mvn exec:java
+   or, if the service has a main class configured for Maven, the usual:
+   mvn clean package
+   java -jar target/control-service-*.jar
+   (use the exact jar name produced by your build)
+5. Run ingestion-service in another terminal:
+   cd ingestion-service
+   mvn clean package
+   java -jar target/ingestion-service-*.jar
+6. Run indexer-service:
+   cd indexer-service
+   mvn clean package
+   java -jar target/indexer-service-*.jar
+7. Run search-service:
+   cd search-service
+   mvn clean package
+   java -jar target/search-service-*.jar
+8. Run tests (from the root):
    mvn test
-Each service can be executed individually on a separate port as defined in its application.properties file. They can also run simultaneously for end-to-end testing of the data flow.
+
+Notes:
+- control-service will start a Javalin server on the port configured in its code (for example 7000 or 8080, depending on how it is written).
+- The other services should also expose their endpoints on their configured ports.
+- To run all at once you need one terminal per service.
 
 ## Main Features
-- Centralized orchestration of ingestion, indexing, and search workflows.
-- Independent services that can be scaled horizontally.
-- Modular design allowing future extension (new data sources or search filters).
-- Consistent REST API design across all services.
-- Logging and monitoring of workflows from the Control Service.
-- Automatic data validation and normalization in the Ingestion Service.
-- Efficient indexing pipeline ensuring fast search queries.
-- Resilient and testable code following clean architecture standards.
+- Javalin-based control layer: very lightweight HTTP layer for orchestration.
+- Clear separation of concerns: control-service does orchestration; ingestion-service does data input; indexer-service does data preparation for search; search-service does querying.
+- REST endpoints in all services so they can call each other over HTTP.
+- Maven build per service to keep dependencies isolated.
 
 ## Development Guidelines
-- Follow code style rules defined in checkstyle.xml.
-- Document all public classes and key methods using Javadoc.
-- Maintain test coverage on new code.
-- Run mvn verify before any commit to ensure quality gates are passed.
-- Branch naming convention:
-  - feature/<short-description> for new features
-  - bugfix/<short-description> for bug fixes
-  - chore/<task> for maintenance work
-- Commit message convention: use Conventional Commits (e.g., feat:, fix:, chore:).
-- All merges to main branch must go through pull requests and peer review.
-- Each microservice must be buildable and runnable independently.
-
-## Example Workflow
-1. Developer starts all services locally using mvn spring-boot:run in separate terminals.
-2. Control Service issues POST /ingest to the Ingestion Service.
-3. Ingestion Service collects and stores data, then notifies Control Service.
-4. Control Service issues POST /index to the Indexer Service.
-5. Indexer Service builds search indices and confirms readiness.
-6. User performs GET /search?query=value on Search Service to retrieve data.
-7. Control Service logs workflow completion and runtime metrics.
+- Keep the control-service routes in Javalin grouped and named by operation (for example, /ingest, /index, /status).
+- When you add a new endpoint in ingestion-service or indexer-service, update the control-service to call it if it is part of the orchestration.
+- Use the same Java version in all services to avoid build issues.
+- Run mvn clean install in the root before pushing to make sure all services compile.
+- Keep each service runnable on its own so you can debug it in isolation.
 
 ## Team Information
 - Team: DREAM-TEAM-ULPGC
