@@ -1,0 +1,3 @@
+"Benchmark","Mode","Threads","Samples","Score","Score Error (99,9%)","Unit"
+"com.dreamteam.ingestion.benchmark.IngestionBenchmark.testCurrentSplitHeaderBody","thrpt",4,15,"168,649472","5,982008","ops/s"
+"com.dreamteam.ingestion.benchmark.IngestionBenchmark.testOptimizedIndexSearch","thrpt",4,15,"9489,196690","668,467065","ops/s"
