@@ -36,7 +36,7 @@ Each service is independently deployable, communicates via REST endpoints, and f
 - application – Contains business logic and service orchestration.
 - domain – Includes domain entities, models, and value objects.
 - infrastructure – Implements persistence, data access, and external API integration.
-- config – Defines Spring Boot configuration classes, beans, and properties.
+- config – Defines configuration classes, beans, and properties.
 
 ### Communication Flow
 1. Control Service triggers the ingestion process via REST call to Ingestion Service.
