@@ -8,6 +8,7 @@ target/
 .idea/
 .github/
 
+indexer/
 datalake/
 *.db
 control_log.txt
@@ -18,3 +19,14 @@ catalog.json
 progress_parser.json
 
 dependency-reduced-pom.xml
+
+# JMH benchmark output
+benchmarks/results/
+*.csv
+*.json
+*.txt
+
+# Temporary benchmark data
+**/jmh-result.json
+**/jmh-result.csv
+**/jmh-output.txt

@@ -1,51 +1,39 @@
 package com.dreamteam.core;
 
-
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.dreamteam.progress.ProgressTracker;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
 
 public class InvertedIndexer {
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
     private static final Pattern WORD_PATTERN = Pattern.compile("\\b[a-záéíóúüñ]+\\b");
 
     private final String datalakePath;
-    private final String outputPath;
+    private final String outputDir;
     private final String progressPath;
 
-    public InvertedIndexer(String datalakePath, String outputPath, String progressPath) {
+    public InvertedIndexer(String datalakePath, String outputDir, String progressPath) {
         this.datalakePath = datalakePath;
-        this.outputPath = outputPath;
+        this.outputDir = outputDir;
         this.progressPath = progressPath;
     }
 
-
     public void buildIndex() throws IOException {
+
         Path datalake = Paths.get(datalakePath);
-        Path output = Paths.get(outputPath);
+        Path outputDirectory = Paths.get(outputDir);
+
+        Files.createDirectories(outputDirectory);
 
         ProgressTracker progress = ProgressTracker.load(progressPath);
         System.out.println("Last progress: " + progress);
-
-        Map<String, List<Integer>> invertedIndex = loadIndex(output);
 
         List<Path> dayFolders = Files.list(datalake)
                 .filter(Files::isDirectory)
@@ -53,6 +41,7 @@ public class InvertedIndexer {
                 .collect(Collectors.toList());
 
         for (Path dayFolder : dayFolders) {
+
             String dayName = dayFolder.getFileName().toString();
 
             if (progress.getLastDay() != null && dayName.compareTo(progress.getLastDay()) < 0) {
@@ -63,11 +52,12 @@ public class InvertedIndexer {
                     .filter(Files::isDirectory)
                     .sorted(Comparator.comparingInt(p -> {
                         String name = p.getFileName().toString();
-                        return name.matches("\\d+") ? Integer.valueOf(name) : 0;
+                        return name.matches("\\d+") ? Integer.parseInt(name) : 0;
                     }))
                     .collect(Collectors.toList());
 
             for (Path hourFolder : hourFolders) {
+
                 String hourName = hourFolder.getFileName().toString();
 
                 if (dayName.equals(progress.getLastDay()) && progress.getLastHour() != null) {
@@ -83,10 +73,11 @@ public class InvertedIndexer {
                 List<Path> bookFolders = Files.list(hourFolder)
                         .filter(Files::isDirectory)
                         .filter(p -> p.getFileName().toString().matches("\\d+"))
-                        .sorted(Comparator.comparingInt(p -> Integer.valueOf(p.getFileName().toString())))
+                        .sorted(Comparator.comparingInt(p -> Integer.parseInt(p.getFileName().toString())))
                         .collect(Collectors.toList());
 
                 for (Path bookFolder : bookFolders) {
+
                     int bookId = Integer.parseInt(bookFolder.getFileName().toString());
 
                     if (dayName.equals(progress.getLastDay()) &&
@@ -100,36 +91,16 @@ public class InvertedIndexer {
                         continue;
                     }
 
-                    String text = Files.readString(bodyFile).toLowerCase();
-                    Matcher matcher = WORD_PATTERN.matcher(text);
-                    Set<String> words = new HashSet<>();
-                    while (matcher.find()) {
-                        words.add(matcher.group());
-                    }
-
-                    if (words.isEmpty()) {
-                        continue;
-                    }
-
-                    for (String word : words) {
-                        invertedIndex.computeIfAbsent(word, k -> new ArrayList<>());
-                        if (!invertedIndex.get(word).contains(bookId)) {
-                            invertedIndex.get(word).add(bookId);
-                        }
-                    }
+                    indexSingleBook(outputDirectory, bodyFile, bookId);
 
                     progress.setLastIndexedId(Math.max(progress.getLastIndexedId(), bookId));
                     System.out.printf("Indexed book ID %d (%s/%s)%n", bookId, dayName, hourName);
                 }
 
-                for (List<Integer> ids : invertedIndex.values()) {
-                    Collections.sort(ids);
-                }
-
-                saveIndex(output, invertedIndex);
                 progress.setLastDay(dayName);
                 progress.setLastHour(hourName);
                 progress.save(progressPath);
+
                 System.out.printf("Progress saved: %s/%s (last ID: %d)%n",
                         dayName, hourName, progress.getLastIndexedId());
             }
@@ -139,82 +110,48 @@ public class InvertedIndexer {
                 progress.getLastDay(), progress.getLastHour());
     }
 
-    public void updateBookIndex(int bookId) throws IOException {
-        Path datalake = Paths.get(datalakePath);
-        Path output = Paths.get(outputPath);
-
-        Map<String, List<Integer>> invertedIndex = loadIndex(output);
-
-        Path bookPath = findBookPath(datalake, bookId);
-        if (bookPath == null) {
-            throw new IOException("Book ID " + bookId + " not found in datalake");
-        }
-
-        Path bodyFile = bookPath.resolve("body.txt");
-        if (!Files.exists(bodyFile)) {
-            throw new IOException("body.txt not found for book ID " + bookId);
-        }
-
-        for (List<Integer> bookIds : invertedIndex.values()) {
-            bookIds.remove(Integer.valueOf(bookId));
-        }
+    private void indexSingleBook(Path outputDirectory, Path bodyFile, int bookId) throws IOException {
 
         String text = Files.readString(bodyFile).toLowerCase();
         Matcher matcher = WORD_PATTERN.matcher(text);
-        Set<String> words = new HashSet<>();
+
+        Map<String, List<Integer>> termPositions = new HashMap<>();
+
+        int pos = 0;
         while (matcher.find()) {
-            words.add(matcher.group());
+            String word = matcher.group();
+
+            termPositions
+                    .computeIfAbsent(word, k -> new ArrayList<>())
+                    .add(pos);
+
+            pos++;
         }
 
-        for (String word : words) {
-            invertedIndex.computeIfAbsent(word, k -> new ArrayList<>());
-            if (!invertedIndex.get(word).contains(bookId)) {
-                invertedIndex.get(word).add(bookId);
-            }
+        for (Map.Entry<String, List<Integer>> entry : termPositions.entrySet()) {
+            writeTsvPosting(outputDirectory, entry.getKey(), bookId, entry.getValue());
         }
-
-        for (List<Integer> ids : invertedIndex.values()) {
-            Collections.sort(ids);
-        }
-
-        saveIndex(output, invertedIndex);
-        System.out.printf("Updated index for book ID %d%n", bookId);
     }
 
-    private Path findBookPath(Path datalake, int bookId) throws IOException {
-        String bookIdStr = String.valueOf(bookId);
-        
-        List<Path> dayFolders = Files.list(datalake)
-                .filter(Files::isDirectory)
-                .collect(Collectors.toList());
+    private void writeTsvPosting(Path outputDir, String term, int bookId, List<Integer> positions) throws IOException {
 
-        for (Path dayFolder : dayFolders) {
-            List<Path> hourFolders = Files.list(dayFolder)
-                    .filter(Files::isDirectory)
-                    .collect(Collectors.toList());
+        String safeName = URLEncoder.encode(term, StandardCharsets.UTF_8);
+        Path termFile = outputDir.resolve(safeName + ".tsv");
 
-            for (Path hourFolder : hourFolders) {
-                Path bookFolder = hourFolder.resolve(bookIdStr);
-                if (Files.exists(bookFolder) && Files.isDirectory(bookFolder)) {
-                    return bookFolder;
-                }
-            }
+        StringBuilder sb = new StringBuilder();
+        sb.append(bookId).append("\t");
+
+        for (int i = 0; i < positions.size(); i++) {
+            sb.append(positions.get(i));
+            if (i < positions.size() - 1) sb.append(",");
         }
+        sb.append("\n");
 
-        return null;
-    }
-
-    private Map<String, List<Integer>> loadIndex(Path output) throws IOException {
-        if (Files.exists(output)) {
-            String json = Files.readString(output);
-            return gson.fromJson(json, new TypeToken<Map<String, List<Integer>>>(){}.getType());
-        }
-        return new HashMap<>();
-    }
-
-    private void saveIndex(Path output, Map<String, List<Integer>> index) throws IOException {
-        Files.createDirectories(output.getParent());
-        String json = gson.toJson(index);
-        Files.writeString(output, json);
+        Files.writeString(
+                termFile,
+                sb.toString(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.APPEND
+        );
     }
 }
